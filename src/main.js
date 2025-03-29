@@ -133,7 +133,7 @@ To implement the spring embedder algorithm, I need to get the physics behind spr
 ### Hooke’s Law:
 $$f = -k*x $$
 
-or more readable: $$ {force} = -{stifness}*stretch$$
+or more readable: $$ {force} = -{stiffness}*stretch$$
 
 ## Understand Hooke’s Law in a 2d space:
 
@@ -166,11 +166,11 @@ So the final formula to get the force in 2D is:
 $$(F_x,F_y) = [-k \\cdot \\text{stretch} \\cdot \\frac{dx}{\\text{distance}}, -k \\cdot \\text{stretch} \\cdot \\frac{dy}{\\text{distance}} ] $$
 
 ${"```js"}
-function springForce([x1, y1], [x2, y2], stifness, restLength) {
+function springForce([x1, y1], [x2, y2], stiffness, restLength) {
   const [adjacentDeltaX, oppositeDeltaY] = [x1 - x2, y1 - y2]; // translate the system so the triangle is at (0,0)
   const distance = Math.sqrt(adjacentDeltaX ** 2 + oppositeDeltaY ** 2) + 1;
   const stretch = distance - restLength;
-  const force = -stifness * stretch;
+  const force = -stiffness * stretch;
   const [cosOpartX, sinOpartY] = [adjacentDeltaX / distance, oppositeDeltaY / distance];
   const [scaledForceX, scaledForceY] = [force * cosOpartX, force * sinOpartY];
   return [scaledForceX, scaledForceY];
@@ -182,7 +182,7 @@ ${"```"}
 In physics simulation I understand that the time is handled by the iteration of a for loop:
 
 ${"```js"}
-const stifness = 0.8;
+const stiffness = 0.8;
 const iterations = 5;
 const [nodeX, nodeY] = [0, 0];
 let [currentLabelX, currentLabelY] = [100, 100];
@@ -192,7 +192,7 @@ for (let i = 0; i < iterations; i++) {
   const [scaledForceX, scaledForceY] = springForce(
     [currentLabelX, currentLabelY],
     [nodeX, nodeY],
-    stifness,
+    stiffness,
     restLength,
   );
   totalForceX += scaledForceX;

@@ -88,7 +88,7 @@ export function link(nodeId, labelId) {
     let [nodeX, nodeY, nodeRadiusX, nodeRadiusY] = getEllipseSize(nodeElement);
     const [labelX, labelY, labelWidth, labelHeight] = getRectSize(labelElement);
 
-    const stifness = 0.8;
+    const stiffness = 0.8;
     let totalForceX = 0;
     let totalForceY = 0;
 
@@ -105,7 +105,7 @@ export function link(nodeId, labelId) {
         springForce(
           [currentLabelX, currentLabelY],
           [nodeX, nodeY],
-          stifness,
+          stiffness,
           restLength,
         );
 
@@ -113,7 +113,7 @@ export function link(nodeId, labelId) {
         "iterations",
         labelElement,
         [-1000, -450],
-        `iteration: ${i + 1}, stifness: ${stifness}, restLength: ${Math.trunc(restLength)}, stretch: ${Math.round(stretch)}, distance: ${distanceFromNode}`,
+        `iteration: ${i + 1}, stiffness: ${stiffness}, restLength: ${Math.trunc(restLength)}, stretch: ${Math.round(stretch)}, distance: ${distanceFromNode}`,
       );
 
       totalForceX += Math.round(scaledForceX);

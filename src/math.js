@@ -16,12 +16,12 @@ export function ellipseIntersection(ellipse, point) {
   return [x, y];
 }
 
-export function springForce([x1, y1], [x2, y2], stifness, restLength) {
+export function springForce([x1, y1], [x2, y2], stiffness, restLength) {
   const [adjacentDeltaX, oppositeDeltaY] = [x1 - x2, y1 - y2]; // translate the system so the spring is at (0,0)
   const distance =
     Math.round(Math.sqrt(adjacentDeltaX ** 2 + oppositeDeltaY ** 2)) + 1;
   const stretch = distance - restLength;
-  const force = -stifness * stretch;
+  const force = -stiffness * stretch;
   const [cosOpartX, sinOpartY] = [
     adjacentDeltaX / distance,
     oppositeDeltaY / distance,
