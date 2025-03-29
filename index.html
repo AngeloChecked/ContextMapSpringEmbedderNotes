@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <script src=" https://cdn.jsdelivr.net/npm/markdown-it@14.1.0/dist/markdown-it.min.js "></script>
+        <link
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css"
+        />
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+        <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css"
+            integrity="sha384-zh0CIslj+VczCZtlzBcjt5ppRcsAmDnRem7ESsYwWwg3m/OaJ2l4x7YBZl9Kxxib"
+            crossorigin="anonymous"
+        />
+        <script
+            defer
+            src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"
+            integrity="sha384-Rma6DA2IPUwhNxmrB/7S3Tno0YY7sFu9WSYMCuulLhIqYSGZ2gKCJWIqhBWqMQfh"
+            crossorigin="anonymous"
+        ></script>
+    </head>
+    <style>
+        html,
+        body {
+            font-family: arial, sans-serif;
+            margin: 0;
+            padding: 5px;
+            max-width: 800px;
+        }
+    </style>
+    <body>
+        <div id="app"></div>
+        <script>
+            const mdCompiler = markdownit({
+                html: true,
+                highlight: function (str, lang) {
+                    return hljs.highlight(lang, str).value;
+                },
+            });
+
+            function md(txt) {
+                txt = String(txt).replaceAll(/\$\$(.*)\$\$/g, (match) => {
+                    return katex.renderToString(match.slice(2, -2));
+                });
+                return mdCompiler.render(txt);
+            }
+        </script>
+        <script type="module" src="/src/main.js"></script>
+    </body>
+</html>
