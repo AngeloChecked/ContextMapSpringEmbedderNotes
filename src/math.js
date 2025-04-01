@@ -29,3 +29,22 @@ export function springForce([x1, y1], [x2, y2], stiffness, restLength) {
   const [scaledForceX, scaledForceY] = [force * cosOpartX, force * sinOpartY];
   return [scaledForceX, scaledForceY, force, stretch, distance];
 }
+
+export function overlappingRectangle(rect1, rect2) {
+  let [x1, y1, w1, h1] = rect1;
+  let [x2, y2, w2, h2] = rect2;
+
+  [x1, y1, x2, y2] = [
+    Math.max(x1, x2),
+    Math.max(y1, y2),
+    Math.min(x1 + w1, x2 + w2),
+    Math.min(y1 + h1, y2 + h2),
+  ];
+
+  const areOverlapping = x1 < x2 && y1 < y2;
+  if (areOverlapping) {
+    const [w, h] = [x2 - x1, y2 - y1];
+    return [x1, y1, x2, y2, w, h];
+  }
+  return null;
+}

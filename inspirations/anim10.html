@@ -1,0 +1,94 @@
+<html>
+    <svg id="svgCanvas" height="1000" width="1000"></svg>
+    <script>
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.getElementById("svgCanvas");
+
+        const colors = ["blue", "red", "green", "yellow", "purple", "orange"];
+        const rectElems = [];
+        const springElems = [];
+
+        const length = 400; // Longer string
+        const centerX = 500;
+        const centerY = 500;
+
+        for (let i = 0; i < colors.length; i++) {
+            const angle = (i / colors.length) * 2 * Math.PI;
+            const rectElem = document.createElementNS(svgNS, "rect");
+            rectElem.setAttribute("width", 50);
+            rectElem.setAttribute("height", 50);
+            rectElem.setAttribute("fill", colors[i]);
+            rectElem.setAttribute("x", centerX + length * Math.cos(angle) - 25);
+            rectElem.setAttribute("y", centerY + length * Math.sin(angle) - 25);
+            svg.appendChild(rectElem);
+            rectElems.push(rectElem);
+
+            const springElem = document.createElementNS(svgNS, "line");
+            springElem.setAttribute("x1", centerX);
+            springElem.setAttribute("y1", centerY);
+            springElem.setAttribute("x2", centerX + length * Math.cos(angle));
+            springElem.setAttribute("y2", centerY + length * Math.sin(angle));
+            springElem.setAttribute("stroke", "black");
+            springElem.setAttribute("stroke-width", "2");
+            svg.appendChild(springElem);
+            springElems.push(springElem);
+        }
+
+        let angles = [
+            Math.PI / 4,
+            -Math.PI / 4,
+            Math.PI / 6,
+            -Math.PI / 6,
+            Math.PI / 8,
+            -Math.PI / 8,
+        ];
+        const gravity = 0.01;
+
+        function update() {
+            const forces = angles.map((angle) => -gravity * Math.sin(angle));
+
+            for (let i = 0; i < angles.length; i++) {
+                angles[i] += forces[i];
+            }
+
+            for (let i = 0; i < angles.length; i++) {
+                for (let j = i + 1; j < angles.length; j++) {
+                    const dx =
+                        centerX +
+                        length * Math.sin(angles[i]) -
+                        (centerX + length * Math.sin(angles[j]));
+                    const dy =
+                        centerY +
+                        length * Math.cos(angles[i]) -
+                        (centerY + length * Math.cos(angles[j]));
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 50) {
+                        const repulsion = 0.05;
+                        angles[i] += repulsion;
+                        angles[j] -= repulsion;
+                    }
+                }
+            }
+        }
+
+        function draw() {
+            for (let i = 0; i < rectElems.length; i++) {
+                const x = centerX + length * Math.sin(angles[i]);
+                const y = centerY + length * Math.cos(angles[i]);
+                rectElems[i].setAttribute("x", x - 25);
+                rectElems[i].setAttribute("y", y - 25);
+                springElems[i].setAttribute("x2", x);
+                springElems[i].setAttribute("y2", y);
+            }
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+    </script>
+</html>

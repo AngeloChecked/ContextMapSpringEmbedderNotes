@@ -7,8 +7,9 @@ import {
   createEllipse,
   createSquare,
 } from "./svg.js";
-
-import { engine, link } from "./engine.js";
+import { interactiveExample1 } from "./interactiveExample1.js";
+import { interactiveExample2 } from "./interactiveExample2.js";
+import { engine } from "./engine.js";
 import { ellipseIntersection } from "./math.js";
 
 const x = md(`
@@ -121,9 +122,6 @@ function ellipseIntersection(ellipse, point) {
 }
 ${"```"}
 
-
-
-
 ${pointExample()}
 
 ## Understand spring force and simple physics simulation
@@ -203,11 +201,8 @@ const [newLabelX,newLabelY] = [labelX + totalForceX, labelY + totalForceY];
 ${"```"}
 
 An interactive example:
-`);
 
-document.querySelector("#app").innerHTML += `<p>${x}</p>`;
-
-const svgHtml = createSvg(
+${createSvg(
   "svg1",
   [600, 300],
   [1000, 1000],
@@ -216,13 +211,29 @@ const svgHtml = createSvg(
     ${createEllipse("node1", [-300, 0], [300, 150], "white", "blue")}
     ${createSquare("label1node1", [-300, 0], [250, 120], "white", "red", 1)}
   `,
-);
+)}
 
-document.querySelector("#app").innerHTML += `
-${svgHtml}
-`;
+## Collisions and propagate forces
 
-link("node1", "label1node1");
+${createSvg(
+  "svg2",
+  [600, 300],
+  [1000, 1000],
+  "lightgray",
+  `
+    ${createEllipse("node2", [-300, 0], [300, 150], "white", "blue")}
+    ${createSquare("label1node2", [-300, -200], [250, 120], "white", "red", 1)}
+    ${createSquare("label2node2", [-300, 100], [250, 120], "white", "red", 1)}
+    ${createSquare("label3node2", [-700, -100], [250, 120], "white", "red", 1)}
+  `,
+)}
+`);
+
+document.querySelector("#app").innerHTML += `<p>${x}</p>`;
+
+interactiveExample1("node1", "label1node1");
+interactiveExample2("node2", "label1node2", "label2node2", "label3node2");
+
 engine();
 
 function pointExample() {

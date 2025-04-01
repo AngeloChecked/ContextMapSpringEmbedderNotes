@@ -5,17 +5,7 @@ export function createSvg(
   bgColor,
   body,
 ) {
-  const svg = `
-<svg
-  id="${id}"
-  viewBox="-${innerWidth / 2} -${innerHeight / 2} ${innerWidth} ${innerHeight}"
-  width="${width}"
-  height="${height}"
-  style="background-color:${bgColor};"
->
-${body}
-</svg>
-`;
+  const svg = `<svg id="${id}" viewBox="-${innerWidth / 2} -${innerHeight / 2} ${innerWidth} ${innerHeight}" width="${width}" height="${height}" style="background-color:${bgColor};" > ${body} </svg>`;
   return svg;
 }
 

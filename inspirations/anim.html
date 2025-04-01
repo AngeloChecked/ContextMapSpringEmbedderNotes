@@ -1,0 +1,70 @@
+<html>
+    <svg id="svgCanvas" height="1000" width="1000"></div>
+    <script>
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.getElementById("svgCanvas");
+
+    // Create two rectangles
+    let rect1 = { x: 50, y: 50, width: 50, height: 50, vx: 2, vy: 2, mass: 2 };
+    let rect2 = { x: 300, y: 200, width: 50, height: 50, vx: 0, vy: 0, mass: 3 };
+    let collided = false;
+
+    const rect1Elem = document.createElementNS(svgNS, "rect");
+    rect1Elem.setAttribute("width", rect1.width);
+    rect1Elem.setAttribute("height", rect1.height);
+    rect1Elem.setAttribute("fill", "blue");
+    svg.appendChild(rect1Elem);
+
+    const rect2Elem = document.createElementNS(svgNS, "rect");
+    rect2Elem.setAttribute("width", rect2.width);
+    rect2Elem.setAttribute("height", rect2.height);
+    rect2Elem.setAttribute("fill", "red");
+    svg.appendChild(rect2Elem);
+
+    function update() {
+        // Move the first rectangle
+        rect1.x += rect1.vx;
+        rect1.y += rect1.vy;
+        rect2.x += rect2.vx;
+        rect2.y += rect2.vy;
+
+        // Check for collision
+        if (!collided && rect1.x + rect1.width >= rect2.x && rect1.y + rect1.height >= rect2.y) {
+            collided = true;
+
+            // Compute new velocities after elastic collision
+            let v1x = ((rect1.mass - rect2.mass) / (rect1.mass + rect2.mass)) * rect1.vx +
+                      ((2 * rect2.mass) / (rect1.mass + rect2.mass)) * rect2.vx;
+            let v2x = ((2 * rect1.mass) / (rect1.mass + rect2.mass)) * rect1.vx +
+                      ((rect2.mass - rect1.mass) / (rect1.mass + rect2.mass)) * rect2.vx;
+
+            let v1y = ((rect1.mass - rect2.mass) / (rect1.mass + rect2.mass)) * rect1.vy +
+                      ((2 * rect2.mass) / (rect1.mass + rect2.mass)) * rect2.vy;
+            let v2y = ((2 * rect1.mass) / (rect1.mass + rect2.mass)) * rect1.vy +
+                      ((rect2.mass - rect1.mass) / (rect1.mass + rect2.mass)) * rect2.vy;
+
+            rect1.vx = v1x;
+            rect1.vy = v1y;
+            rect2.vx = v2x;
+            rect2.vy = v2y;
+        }
+    }
+
+    function draw() {
+        rect1Elem.setAttribute("x", rect1.x);
+        rect1Elem.setAttribute("y", rect1.y);
+        rect2Elem.setAttribute("x", rect2.x);
+        rect2Elem.setAttribute("y", rect2.y);
+    }
+
+    function loop() {
+
+        update();
+        draw();
+        requestAnimationFrame(loop);
+    }
+
+    loop();
+
+    </script>
+</html>

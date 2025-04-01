@@ -1,0 +1,137 @@
+<html>
+    <svg id="svgCanvas" height="1000" width="1000"></svg>
+    <script>
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.getElementById("svgCanvas");
+
+        // Central point where both springs are anchored
+        const anchor = { x: 500, y: 100 };
+        let k = 0.1; // Spring stiffness
+        let restLength = 200; // Natural length of each spring
+
+        // Create two rectangles linked by individual springs
+        let rect1 = {
+            x: anchor.x - restLength,
+            y: anchor.y + restLength,
+            width: 50,
+            height: 50,
+            vx: 0,
+            vy: 0,
+            mass: 2,
+        };
+        let rect2 = {
+            x: anchor.x + restLength,
+            y: anchor.y + restLength,
+            width: 50,
+            height: 50,
+            vx: 0,
+            vy: 0,
+            mass: 3,
+        };
+
+        const rect1Elem = document.createElementNS(svgNS, "rect");
+        rect1Elem.setAttribute("width", rect1.width);
+        rect1Elem.setAttribute("height", rect1.height);
+        rect1Elem.setAttribute("fill", "blue");
+        svg.appendChild(rect1Elem);
+
+        const rect2Elem = document.createElementNS(svgNS, "rect");
+        rect2Elem.setAttribute("width", rect2.width);
+        rect2Elem.setAttribute("height", rect2.height);
+        rect2Elem.setAttribute("fill", "red");
+        svg.appendChild(rect2Elem);
+
+        const spring1Elem = document.createElementNS(svgNS, "line");
+        spring1Elem.setAttribute("stroke", "black");
+        spring1Elem.setAttribute("stroke-width", "2");
+        svg.appendChild(spring1Elem);
+
+        const spring2Elem = document.createElementNS(svgNS, "line");
+        spring2Elem.setAttribute("stroke", "black");
+        spring2Elem.setAttribute("stroke-width", "2");
+        svg.appendChild(spring2Elem);
+
+        function update() {
+            // Move the rectangles
+            rect1.vy += 0.1; // Gravity
+            rect2.vy += 0.1; // Gravity
+
+            rect1.x += rect1.vx;
+            rect1.y += rect1.vy;
+            rect2.x += rect2.vx;
+            rect2.y += rect2.vy;
+
+            // Ensure rectangles do not surpass the top part of the pendulum
+            if (rect1.y < anchor.y) rect1.y = anchor.y;
+            if (rect2.y < anchor.y) rect2.y = anchor.y;
+
+            // Compute spring force for rect1
+            let dx1 = rect1.x - anchor.x;
+            let dy1 = rect1.y - anchor.y;
+            let distance1 = Math.sqrt(dx1 * dx1 + dy1 * dy1);
+            let force1 = -k * (distance1 - restLength);
+            let fx1 = (dx1 / distance1) * force1;
+            let fy1 = (dy1 / distance1) * force1;
+            rect1.vx += fx1 / rect1.mass;
+            rect1.vy += fy1 / rect1.mass;
+
+            // Compute spring force for rect2
+            let dx2 = rect2.x - anchor.x;
+            let dy2 = rect2.y - anchor.y;
+            let distance2 = Math.sqrt(dx2 * dx2 + dy2 * dy2);
+            let force2 = -k * (distance2 - restLength);
+            let fx2 = (dx2 / distance2) * force2;
+            let fy2 = (dy2 / distance2) * force2;
+            rect2.vx += fx2 / rect2.mass;
+            rect2.vy += fy2 / rect2.mass;
+
+            // Check for collision and repel both in opposite directions
+            let dx = rect2.x - rect1.x;
+            let dy = rect2.y - rect1.y;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            let minDist = (rect1.width + rect2.width) / 2;
+
+            if (distance < minDist) {
+                let overlap = minDist - distance;
+                let collisionAngle = Math.atan2(dy, dx);
+                let force = overlap * 0.5;
+
+                rect1.vx -= (force * Math.cos(collisionAngle)) / rect1.mass;
+                rect1.vy -= (force * Math.sin(collisionAngle)) / rect1.mass;
+                rect2.vx += (force * Math.cos(collisionAngle)) / rect2.mass;
+                rect2.vy += (force * Math.sin(collisionAngle)) / rect2.mass;
+
+                // Ensure rectangles do not overlap
+                rect1.x -= (overlap * Math.cos(collisionAngle)) / 2;
+                rect1.y -= (overlap * Math.sin(collisionAngle)) / 2;
+                rect2.x += (overlap * Math.cos(collisionAngle)) / 2;
+                rect2.y += (overlap * Math.sin(collisionAngle)) / 2;
+            }
+        }
+
+        function draw() {
+            rect1Elem.setAttribute("x", rect1.x);
+            rect1Elem.setAttribute("y", rect1.y);
+            rect2Elem.setAttribute("x", rect2.x);
+            rect2Elem.setAttribute("y", rect2.y);
+
+            spring1Elem.setAttribute("x1", anchor.x);
+            spring1Elem.setAttribute("y1", anchor.y);
+            spring1Elem.setAttribute("x2", rect1.x + rect1.width / 2);
+            spring1Elem.setAttribute("y2", rect1.y + rect1.height / 2);
+
+            spring2Elem.setAttribute("x1", anchor.x);
+            spring2Elem.setAttribute("y1", anchor.y);
+            spring2Elem.setAttribute("x2", rect2.x + rect2.width / 2);
+            spring2Elem.setAttribute("y2", rect2.y + rect2.height / 2);
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+    </script>
+</html>

@@ -1,0 +1,87 @@
+<html>
+    <svg id="svgCanvas" height="1000" width="1000"></svg>
+    <script>
+        const svgNS = "http://www.w3.org/2000/svg";
+        const svg = document.getElementById("svgCanvas");
+
+        const colors = ["blue", "red", "green", "yellow", "purple", "orange"];
+        const rectElems = [];
+        const springElems = [];
+
+        for (let i = 0; i < colors.length; i++) {
+            const rectElem = document.createElementNS(svgNS, "rect");
+            rectElem.setAttribute("width", 50);
+            rectElem.setAttribute("height", 50);
+            rectElem.setAttribute("fill", colors[i]);
+            rectElem.setAttribute("x", 475);
+            rectElem.setAttribute("y", 475);
+            svg.appendChild(rectElem);
+            rectElems.push(rectElem);
+
+            const springElem = document.createElementNS(svgNS, "line");
+            springElem.setAttribute("x1", 500);
+            springElem.setAttribute("y1", 500);
+            springElem.setAttribute("x2", 500);
+            springElem.setAttribute("y2", 500);
+            springElem.setAttribute("stroke", "black");
+            springElem.setAttribute("stroke-width", "2");
+            svg.appendChild(springElem);
+            springElems.push(springElem);
+        }
+
+        let angles = [
+            Math.PI / 4,
+            -Math.PI / 4,
+            Math.PI / 6,
+            -Math.PI / 6,
+            Math.PI / 8,
+            -Math.PI / 8,
+        ];
+        const length = 200;
+        const gravity = 0.01;
+
+        function update() {
+            const forces = angles.map((angle) => -gravity * Math.sin(angle));
+            angles = angles.map((angle, i) => angle + forces[i]);
+
+            for (let i = 0; i < angles.length; i++) {
+                for (let j = i + 1; j < angles.length; j++) {
+                    const dx =
+                        500 +
+                        length * Math.sin(angles[i]) -
+                        (500 + length * Math.sin(angles[j]));
+                    const dy =
+                        500 +
+                        length * Math.cos(angles[i]) -
+                        (500 + length * Math.cos(angles[j]));
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < 50) {
+                        const repulsion = 0.05;
+                        angles[i] += repulsion;
+                        angles[j] -= repulsion;
+                    }
+                }
+            }
+        }
+
+        function draw() {
+            for (let i = 0; i < rectElems.length; i++) {
+                const x = 500 + length * Math.sin(angles[i]);
+                const y = 500 + length * Math.cos(angles[i]);
+                rectElems[i].setAttribute("x", x - 25);
+                rectElems[i].setAttribute("y", y - 25);
+                springElems[i].setAttribute("x2", x);
+                springElems[i].setAttribute("y2", y);
+            }
+        }
+
+        function loop() {
+            update();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        loop();
+    </script>
+</html>
