@@ -15,13 +15,10 @@ import {
 } from "./svgElements";
 import { sleep } from "./engine";
 
-export function interactiveExample2(nodeId, labelId, label2Id, label3Id) {
+export function interactiveExample2(nodeId, labelIds) {
   const nodeElement = document.querySelector(`#${nodeId}`);
-  const labelElement = document.querySelector(`#${labelId}`);
-  const label2Element = document.querySelector(`#${label2Id}`);
-  const label3Element = document.querySelector(`#${label3Id}`);
   const scaleY = getSvgToHtmlMovementHeightScaling(nodeElement);
-  const labels = [labelElement, label2Element, label3Element];
+  const labels = labelIds.map((id) => document.querySelector(`#${id}`));
 
   const updateLabelPosition = (event) => {
     for (const label of labels) {
@@ -69,7 +66,7 @@ export function interactiveExample2(nodeId, labelId, label2Id, label3Id) {
         l.setAttribute("fill", "white");
       }
     }
-    const iterations = 5;
+    const iterations = 100;
     let [nodeX, nodeY, nodeRadiusX, nodeRadiusY] = getEllipseSize(nodeElement);
     const stiffness = 0.8;
 
@@ -111,36 +108,33 @@ export function interactiveExample2(nodeId, labelId, label2Id, label3Id) {
           `iteration: ${i + 1}, stiffness: ${stiffness}, restLength: ${Math.trunc(restLength)}, stretch: ${Math.round(stretch)}, distance: ${distanceFromNode}`,
         );
 
-        let [nextLabelX, nextLabelY] = [x1 + currentForceX, y1 + currentForceY];
+        //let [nextLabelX, nextLabelY] = [x1 + currentForceX, y1 + currentForceY];
+        forces[currentLabelIdx] = [fx1 + currentForceX, fy1 + currentForceY];
         for (const [otherLabelIdx] of labels.entries()) {
-          if (otherLabelIdx === currentLabelIdx) continue;
+          if (currentLabelIdx === otherLabelIdx) {
+            continue;
+          }
 
           const [oxf, oyf] = forces[otherLabelIdx];
           const [x2, y2, w2, h2] = positions[otherLabelIdx];
-          const otherLabelXPredict = x2 + oxf;
-          const otherLabelYPredict = y2 + oyf;
+          const [otherLXPredict, otherLYPredict] = [x2 + oxf, y2 + oyf];
 
           const overlappingRect = overlappingRectangle(
-            [nextLabelX, nextLabelY, w1, h1],
-            [otherLabelXPredict, otherLabelYPredict, w2, h2],
+            [x1, y1, w1, h1],
+            [otherLXPredict, otherLYPredict, w2, h2],
           );
 
           if (overlappingRect) {
             const [ox1, oy1, ox2, oy2, ow, oh] = overlappingRect;
-            const [dirX, dirY] = [
-              Math.sign(nextLabelX - x2),
-              Math.sign(nextLabelY - y2),
-            ];
-            forces[currentLabelIdx] = [
-              fx1 + currentForceX + ow * dirX,
-              fy1 + currentForceY + oh * dirY,
-            ];
-            forces[otherLabelIdx] = [oxf + ow * -dirX, oyf + oh * -dirY];
-          } else {
-            forces[currentLabelIdx] = [
-              fx1 + currentForceX,
-              fy1 + currentForceY,
-            ];
+            appendTextTo(
+              "text",
+              currentLabel,
+              [ox1, oy2],
+              `overlap: ${currentLabelIdx}`,
+            );
+            const [dirX, dirY] = [Math.sign(x1 - x2), Math.sign(y1 - y2)];
+            forces[currentLabelIdx] = [fx1 + ow * dirX, fy1 + oh * dirY];
+            forces[otherLabelIdx] = [oxf - ow * dirX, oyf - oh * dirY];
           }
         }
 
@@ -150,7 +144,7 @@ export function interactiveExample2(nodeId, labelId, label2Id, label3Id) {
           Math.round(y1 + currentForceY),
         ];
         onLabelMove(event);
-        await sleep(100);
+        await sleep(0);
         appendTextTo(
           "text",
           currentLabel,

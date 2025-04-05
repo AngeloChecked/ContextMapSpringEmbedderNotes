@@ -6,11 +6,12 @@ import {
   createSvg,
   createEllipse,
   createSquare,
+  createArrow,
 } from "./svg.js";
 import { interactiveExample1 } from "./interactiveExample1.js";
 import { interactiveExample2 } from "./interactiveExample2.js";
 import { engine } from "./engine.js";
-import { ellipseIntersection } from "./math.js";
+import { ellipseIntersection, overlappingRectangle } from "./math.js";
 
 const x = md(`
 # ContextMap journey with SpringEmbedder
@@ -215,6 +216,69 @@ ${createSvg(
 
 ## Collisions and propagate forces
 
+To manage label overlapping, my idea is to check each label for collisions, prevent them from overlapping, and adjust their positions with a repulsion to favor a more distributed layout.
+
+${rectOverlapExample()}
+
+$$\\text{If } \\max(x_1, x_2) < \\min(x_1 + w_1, x_2 + w_2) \\text{ and } \\max(y_1, y_2) < \\min(y_1 + h_1, y_2 + h_2), \\text{ then overlap is } \\left( \\max(x_1, x_2), \\max(y_1, y_2), \\min(x_1 + w_1, x_2 + w_2), \\min(y_1 + h_1, y_2 + h_2) \\right)$$
+
+${"```"}js
+function overlappingRectangle(rect1, rect2) {
+  let [x1, y1, w1, h1] = rect1;
+  let [x2, y2, w2, h2] = rect2;
+
+  [x1, y1, x2, y2] = [
+    Math.max(x1, x2),
+    Math.max(y1, y2),
+    Math.min(x1 + w1, x2 + w2),
+    Math.min(y1 + h1, y2 + h2),
+  ];
+
+  const areOverlapping = x1 < x2 && y1 < y2;
+  if (areOverlapping) {
+    const [w, h] = [x2 - x1, y2 - y1];
+    return [x1, y1, x2, y2, w, h];
+  }
+  return null;
+}
+${"```"}
+
+so if I identify a overlap, I skip the force application for that iteration and repulse the label for their overlapping area:
+
+${"```"}js
+for (let i = 0; i < iterations; i++) {
+  for (const [currentLabelIdx, currentLabel] of labels.entries()) {
+    let [fx1, fy1] = forces[currentLabelIdx];
+    let [cx1, cy1] = positionCenters[currentLabelIdx];
+    let [x1, y1, w1, h1] = positions[currentLabelIdx];
+    [cx1, cy1] = [cx1 + fx1, cy1 + fy1];
+    [x1, y1] = [x1 + fx1, y1 + fy1];
+
+    const [intersectionX, intersectionY] = ellipseIntersection([nodeX, nodeY, nodeRadiusX, nodeRadiusY], [cx1, cy1]);
+    const restLength = distance([nodeX, nodeY], [intersectionX, intersectionY]);
+    const [currentForceX, currentForceY] = springForce([cx1, cy1], [nodeX, nodeY], stiffness, restLength);
+
+    forces[currentLabelIdx] = [fx1 + currentForceX, fy1 + currentForceY];
+    for (const [otherLabelIdx] of labels.entries()) {
+      if (currentLabelIdx === otherLabelIdx) continue;
+      const [oxf, oyf] = forces[otherLabelIdx];
+      const [x2, y2, w2, h2] = positions[otherLabelIdx];
+      const [otherLXPredict, otherLYPredict] = [x2 + oxf, y2 + oyf];
+
+      const overlappingRect = overlappingRectangle([x1, y1, w1, h1], [otherLXPredict, otherLYPredict, w2, h2]);
+      if (overlappingRect) {
+        const [ox1, oy1, ox2, oy2, ow, oh] = overlappingRect;
+
+        const [dirX, dirY] = [Math.sign(x1 - x2), Math.sign(y1 - y2)];
+        forces[currentLabelIdx] = [fx1 + ow * dirX, fy1 + oh * dirY];
+        forces[otherLabelIdx] = [oxf - ow * dirX, oyf - oh * dirY];
+      }
+    }
+  }
+}
+${"```"}
+
+
 ${createSvg(
   "svg2",
   [600, 300],
@@ -224,7 +288,9 @@ ${createSvg(
     ${createEllipse("node2", [-300, 0], [300, 150], "white", "blue")}
     ${createSquare("label1node2", [-300, -200], [250, 120], "white", "red", 1)}
     ${createSquare("label2node2", [-300, 100], [250, 120], "white", "red", 1)}
-    ${createSquare("label3node2", [-700, -100], [250, 120], "white", "red", 1)}
+    ${createSquare("label3node2", [-200, -150], [250, 120], "white", "red", 1)}
+    ${createSquare("label4node2", [-800, -100], [250, 120], "white", "red", 1)}
+    ${createSquare("label5node2", [-500, -100], [250, 120], "white", "red", 1)}
   `,
 )}
 `);
@@ -232,7 +298,13 @@ ${createSvg(
 document.querySelector("#app").innerHTML += `<p>${x}</p>`;
 
 interactiveExample1("node1", "label1node1");
-interactiveExample2("node2", "label1node2", "label2node2", "label3node2");
+interactiveExample2("node2", [
+  "label1node2",
+  "label2node2",
+  "label3node2",
+  "label4node2",
+  "label5node2",
+]);
 
 engine();
 
@@ -266,6 +338,65 @@ function pointExample() {
 ${createDashLine("any", [0, -1000], [0, 1000])}
 ${createDashLine("any", [-1500, 0], [1500, 0])}
 ${createPoint("any", [0, 0])}
+</svg>
+  `;
+  return svg;
+}
+
+function rectOverlapExample() {
+  const [w, h] = [1000, 1000];
+  const [x1, y1, w1, h1] = [-200, 0, 600, 300];
+  const [x2, y2, w2, h2] = [-600, -100, 600, 300];
+  const overlappingRect = overlappingRectangle(
+    [x1, y1, w1, h1],
+    [x2, y2, w2, h2],
+  );
+  const [ox1, oy1, ox2, oy2, ow, oh] = overlappingRect;
+  const [centerX1, centerY1] = [x1 + w1 / 2, y1 + h1 / 2];
+  const [centerX2, centerY2] = [x2 + w2 / 2, y2 + h2 / 2];
+  const [dirX1toX2, dirY1toY2] = [centerX1 - centerX2, centerY1 - centerY2];
+  const [dirX2toX1, dirY2toX1] = [centerX2 - centerX1, centerY2 - centerY1];
+  const [forceX1toX2, forceY1toY2] = [
+    Math.sign(dirX1toX2) * ow,
+    Math.sign(dirY1toY2) * oh,
+  ];
+  const [forceX2toX1, forceY2toX1] = [
+    Math.sign(dirX2toX1) * ow,
+    Math.sign(dirY2toX1) * oh,
+  ];
+  const svg = `
+<svg viewBox="-${w / 2} -${h / 2} ${w}, ${h}" width="600" height="200" style="background:lightgray;">
+<g>
+  ${createSquare("any", [x1, y1], [w1, h1], "white", "red", 1)}
+  ${createSquare("any", [x2, y2], [w2, h2], "white", "red", 1)}
+  ${createPoint("any", [x1, y1])}
+  ${createPoint("any", [x1 + w1, y1])}
+  ${createPoint("any", [x1, y1 + h1])}
+  ${createPoint("any", [x1 + w1, y1 + h1])}
+
+  ${createPoint("any", [x2, y2])}
+  ${createPoint("any", [x2 + w2, y2])}
+  ${createPoint("any", [x2, y2 + h2])}
+  ${createPoint("any", [x2 + w2, y2 + h2])}
+
+  ${createPoint("any", [ox1, oy1], 33, "red")}
+  ${createPoint("any", [ox1 + ow, oy1], 33, "red")}
+  ${createPoint("any", [ox1, oy1 + oh], 33, "red")}
+  ${createPoint("any", [ox1 + ow, oy1 + oh], 33, "red")}
+
+  ${createDashLine("any", [ox1, oy1], [ox1 + ow, oy1])}
+  ${createDashLine("any", [ox1, oy1], [ox1, oy1 + oh])}
+
+  ${createPoint("any", [centerX1, centerY1], 25, "blue")}
+  ${createPoint("any", [centerX2, centerY2], 25, "blue")}
+  ${createDashLine("any", [centerX1, centerY1], [centerX2, centerY2])}
+
+  ${createArrow("any", [centerX1, centerY1 - 400], [centerX2, centerY2 - 400])}
+  ${createText("any", [centerX2, centerY2 - 475], `${dirX1toX2}, ${dirY1toY2}: direction, ${forceX1toX2}, ${forceY1toY2}: force`)}
+
+  ${createArrow("any", [centerX2, centerY2 - 450], [centerX1, centerY1 - 450])}
+  ${createText("any", [centerX1, centerY1 - 350], `${dirX2toX1}, ${dirY2toX1}: direction, ${forceX2toX1}, ${forceY2toX1}: force`)}
+</g>
 </svg>
   `;
   return svg;
